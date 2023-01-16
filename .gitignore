@@ -1,3 +1,6 @@
+output/*.jpg
+output/*.json
+
 # Logs
 logs
 *.log

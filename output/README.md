@@ -1,0 +1,1 @@
+Stable Diffusion output files will be put here on creation

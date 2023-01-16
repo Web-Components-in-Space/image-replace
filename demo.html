@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Image Replace Demo</title>
+    <script src="image-replace.js"></script>
+    <style>
+        img, img-replace {
+            border-style: solid;
+            border-width: 5px;
+            background-color: black;
+        }
+
+        img-replace {
+            width: 400px;
+            height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <img-replace image-service="./sample-image.jpg" src="original.jpg" width="290" height="256" alt="Cat singing into a microphone"></img-replace>
+    <br /><br /><br />
+    <img src="sample-image.jpg" height="200" width="512" alt="Sample text" />
+</body>
+
+<script>
+    let mode = 0;
+    const modes = ['original', 'ai', 'text'];
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 's' && e.ctrlKey) {
+            document.body.querySelectorAll('img-replace').forEach(el => {
+                mode ++;
+                if (mode >= modes.length) {
+                    mode = 0;
+                }
+                el.setAttribute('image-mode', modes[mode] );
+            });
+        }
+    });
+
+</script>
+</html>

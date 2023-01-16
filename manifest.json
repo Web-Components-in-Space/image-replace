@@ -1,0 +1,28 @@
+{
+"manifest_version": 3,
+    "name": "ImgReplace",
+    "description": "Extension that replaces <img> tags with <img-replace>",
+    "version": "1.0",
+    "options_page": "options/options.html",
+    "content_scripts": [
+        {
+            "matches": [
+                "*://*/*"
+            ],
+            "js": [
+                "custom-elements.js",
+                "main.js",
+                "image-replace.js"
+            ],
+            "run_at": "document_end"
+        }
+    ],
+    "options_ui": {
+        "page": "options/options.html",
+        "open_in_tab": false
+    },
+    "host_permissions": ["<all_urls>"],
+    "permissions": [
+        "storage"
+    ]
+}

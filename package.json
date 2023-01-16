@@ -1,0 +1,9 @@
+{
+  "name": "image-replace",
+  "version": "1.0.0",
+  "dependencies": {
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}
