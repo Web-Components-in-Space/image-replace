@@ -1,9 +1,8 @@
 {
 "manifest_version": 3,
-    "name": "ImgReplace",
-    "description": "Extension that replaces <img> tags with <img-replace>",
+    "name": "GenAI Image Replacer",
+    "description": "Replace <img> tags with a web component that shows an AI generated version using alt text",
     "version": "1.0",
-    "options_page": "options/options.html",
     "content_scripts": [
         {
             "matches": [

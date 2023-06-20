@@ -1,5 +1,26 @@
+const requestGeneration = (prompt, endpoint, opts = {}) => {
+    return new Promise(resolve => {
+        const requestOptions = {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                prompt,
+                steps: opts.steps ? opts.steps : 35,
+                sampler_index: opts.sampler ? opts.sampler : 'DDIM',
+            })
+        };
+        fetch(endpoint, requestOptions)
+            .then(response => response.json())
+            .then(data => {
+                resolve(data.images[0]);
+            }).catch(err => {
+                resolve(null);
+        });
+    });
+}
+
 class ImageReplace extends HTMLElement {
-    static get observedAttributes() { return ['src', 'data-src', 'alt', 'image-service', 'image-mode']; }
+    static get observedAttributes() { return ['src', 'data-src', 'alt', 'image-mode', 'image-service']; }
 
     connectedCallback() {
         this.shadowRoot.innerHTML = `
@@ -8,54 +29,81 @@ class ImageReplace extends HTMLElement {
                         display: inline-block;
                         font-family: sans-serif;
                     }
-                    div {
-                        display: block;
+                    
+                    #display {
+                        position: relative;
+                        overflow: hidden;
+                        width: 100%;
+                        height: 100%;
+                        animation: none;
+                    }
+                    
+                    :host(:hover) #controls {
+                        display: flex;
                         position: relative;
                         width: 100%;
                         height: 100%;
-                        color: white;
-                        background: 
-                           linear-gradient(rgba(255,0,0,1) 0%, rgba(255,154,0,1) 10%, rgba(208,222,33,1) 20%, rgba(79,220,74,1) 30%, rgba(63,218,216,1) 40%, rgba(47,201,226,1) 50%, rgba(28,127,238,1) 60%, rgba(95,21,242,1) 70%, rgba(186,12,248,1) 80%, rgba(251,7,217,1) 90%, rgba(255,0,0,1) 100%) 
-                           0 0/100% 200%;
-                           animation: anim 2s linear infinite;
                     }
-                    
-                    div span {
-                        position: absolute;
+        
+                    #controls {
                         overflow: hidden;
-                        width: calc(100% - 10px);
-                        height: calc(100% - 10px);
-                        left: 5px;
-                        top: 5px;
+                        width: 100%;
+                        height: 100%;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
                         line-height: normal;
-                        color: hotpink;
+                        color: white;
+                        display: none;
                     }
                     
-                    div.loaded {
+                    #controls span {
+                        background-color: rgba(0, 0, 0, .75);
+                        padding: 8px;
+                        text-align: center;
+                    }
+                    
+                    #display.loaded {
                         background-size: contain;
                         background-repeat: no-repeat;
                         background-position: center;
                         animation: none;
                     }
                     
-                    :host([image-mode="text"]) div.loaded {
-                        background-image: none !important;
-                        background-color: black;
+                    #display.loading {
+                        animation: anim 2s linear infinite;
                     }
                     
-                    :host([image-mode="text"]) div.loaded p {
-                        display: inline-block;
+                    button {
+                        border-radius: 2px;
+                        background-color: black;
+                        color: white;
+                        cursor: pointer;
+                        border-color: white;
+                        border-style: solid;
+                        border-width: 1px;
+                        padding: 8px;
+                        outline: none;
+                    }
+                    
+                    button[disabled] {
+                        display: none;
+                    }
+                    
+                    button:hover {
+                        background-color: white;
+                        border-color: black;
+                        color: black;
                     }
                     
                     @keyframes anim {
-                        to {background-position:0 -200%}
+                        to {background-position:0 -400%}
                     }
             </style>
-            <div style="position: relative"></div>
+            <div id="display"></div>
         `;
 
         this.display = this.shadowRoot.querySelector('div');
-        this.loadImageReplacement(this.imageURL);
         this.imageMode = this.getAttribute('image-mode');
     }
 
@@ -63,14 +111,16 @@ class ImageReplace extends HTMLElement {
         super();
         this.attachShadow({ mode: 'open' });
         this.generatedImage = undefined;
-    }
+        this.errorNoImage = false;
 
-    get imageURL() {
-        if (!this.hasAttribute('image-service') ) {
-            return undefined;
-        }
-        const prompt = this.hasAttribute('alt') ? this.getAttribute('alt') : '';
-        return `${this.getAttribute('image-service')}/?prompt=${encodeURIComponent(prompt)}`;
+        this.shadowRoot.addEventListener('click',  (event) => {
+            if (event.target.id === 'generate') {
+                event.target.disabled = true;
+                this.loadImageReplacement('ai');
+            } else if (event.target.id === 'original') {
+                this.imageMode = 'original';
+            }
+        })
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -81,8 +131,6 @@ class ImageReplace extends HTMLElement {
             case 'image-mode':
                 this.imageMode = newValue;
                 break;
-            case 'image-service':
-                this.loadImageReplacement(this.imageURL);
         }
     }
 
@@ -93,23 +141,31 @@ class ImageReplace extends HTMLElement {
 
         switch (val) {
             case 'ai':
+                let content = ''
                 if (this.generatedImage) {
                     this.display.style.backgroundImage = `url("${this.generatedImage}")`;
+                    content = `<div id="controls"><button id="original">Show Original</button><br /><span>${this.getAttribute('alt')}</span></div>`;
+                } else if (this.errorNoImage) {
+                    this.display.style.backgroundImage = "radial-gradient(circle, rgba(238,174,202,1) 0%, rgba(158,0,0,1) 100%)";
+                } else if (!this.isLoaded) {
+                    content = `<div id="controls"><button>Show Original</button><br /><span>${this.getAttribute('alt')}</span></div>`;
                 }
-                this.display.innerHTML = '';
-                break;
-
-            case 'text':
-                this.display.innerHTML = `<span>${this.getAttribute('alt')}</span>`;
+                this.display.innerHTML = content;
+                if (this.errorNoImage) {
+                    this.display.innerHTML = '<div id="controls"><span>No alt text provided</span></div>';
+                }
                 break;
 
             case 'original':
             default:
-                const og =this.getAttribute('src') || this.getAttribute('data-src'); // encodeURI('https://www.simplyrecipes.com/thmb/p4d7nLErKZ9IMo9eOumQiEQ8PL8=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/Simply-Recipes-Orange-Breakfast-Rolls-LEAD-3-791478047c984d479a5f3321694f8bed.jpg');//this.getAttribute('src') ? this.getAttribute('src') : 'https://www.whitehouse.gov/wp-content/uploads/2021/01/P20221128AS-0319.jpg'
+                const og = this.getAttribute('src') || this.getAttribute('data-src');
                 this.display.style.backgroundImage = `url("${og}")`;
-                this.display.innerHTML = '';
+                if (this.getAttribute('alt')) {
+                    this.display.innerHTML = `<div id="controls"><button id="generate">${this.generatedImage ? 'Show Generated' : 'Generate'}</button><br /><span>${this.getAttribute('alt')}</span></div>`;
+                } else {
+                    this.display.innerHTML = `<div id="controls"><br /><span>Oops! This image doesn't have any accessible text to generate an image from</span></div>`;
+                }
                 break;
-
         }
     }
 
@@ -118,31 +174,36 @@ class ImageReplace extends HTMLElement {
         image.src = this.getAttribute('src');
     }
 
-    loadImageReplacement(uri) {
-        if (!uri) {
+    loadImageReplacement(forceMode) {
+        // if we're already generated, we've cached it
+        if (this.generatedImage) {
+            this.imageMode = forceMode || this.getAttribute('image-mode');
             return;
         }
-        fetch(uri).then(response => {
-                if (response.status === 204) {
-                    return undefined;
+
+        if (!this.getAttribute('alt')) {
+            this.generatedImage = '';
+            this.display.classList.add('loaded');
+            this.isLoaded = true;
+            this.errorNoImage = true;
+            this.imageMode = this.getAttribute('image-mode');
+        } else if (this.hasAttribute('image-service')) {
+            this.display.classList.add('loading');
+            requestGeneration(this.getAttribute('alt'), this.getAttribute('image-service')).then(img => {
+                if (!img) {
+                    this.display.innerHTML = `<div id="controls"><button id="generate">Try again?</button><br /><span>Oops, that didn't work...</span></div>`
+                    this.display.classList.add('loaded');
+                    this.display.classList.remove('loading');
+                    this.isLoaded = true;
                 } else {
-                    return response.blob();
+                    this.generatedImage = 'data:image/png;base64,' + img;
+                    this.display.classList.add('loaded');
+                    this.display.classList.remove('loading');
+                    this.isLoaded = true;
+                    this.imageMode = forceMode || this.getAttribute('image-mode');
                 }
-            }).then(imageBlob => {
-                if (!imageBlob) {
-                    // try again (and again, and again) but wait 1 second
-                    setTimeout( () => {
-                        this.loadImageReplacement(uri);
-                    }, 3000);
-                    return;
-                }
-                // Then create a local URL for that image and print it
-                 this.generatedImage = URL.createObjectURL(imageBlob);
-                 this.imageMode = this.getAttribute('image-mode');
-                 this.display.classList.add('loaded');
-            }).catch(err => {
-                console.log('error', err)
             });
+        }
     }
 }
 

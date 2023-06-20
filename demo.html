@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Image Replace Demo</title>
-    <script src="image-replace.js"></script>
+    <script type="module" src="image-replace.js"></script>
     <style>
         img, img-replace {
             border-style: solid;
@@ -18,7 +18,8 @@
     </style>
 </head>
 <body>
-    <img src="sample-image.jpg" height="200" width="512" alt="Sample text" />
+    <!--<img src="sample-image.jpg" height="200" width="512" alt="Sample text" /> -->
+    <img-replace src="sample-image.jpg" height="200" width="512" alt="apple jack of spades" image-service="https://966e5d0718afbb6df0.gradio.live/sdapi/v1/txt2img" />
 </body>
 
 <script>
