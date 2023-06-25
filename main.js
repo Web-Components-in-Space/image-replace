@@ -21,7 +21,7 @@ const doSwap = () => {
         for (let i = 0; i < attrs.length; i++) {
             replacer.setAttribute(attrs[i].name, attrs[i].value);
         }
-        chrome.storage.sync.get(['serviceURL']).then(result => {
+        chrome.storage.sync.get(['serviceURL', 'sampler', 'steps']).then(result => {
             replacer.setAttribute('image-service', result.serviceURL || 'http://localhost:5000');
             replacer.setAttribute('sampler', result.sampler || 'DDIM');
             replacer.setAttribute('steps', result.sampler || '35');

@@ -59,6 +59,18 @@ From here, navigate to folder you've just unzipped.
 Once loaded, your extension should appear in the extension manager.
 Ensure it's on by making sure the toggle is in the right/on position.
 
+![](documentation/click-options.png)
+Now, with the extension loaded, load the options to set the path to your
+Automatic 1111 URL.
+
+![](documentation/options-window.png)
+Now set the endpoint to Automatic 1111/Stable Diffusion. Your link should include
+the entire path including the text to image service. For example, if your service lives
+at https://myurl.com, the link would be https://myurl.com/sdapi/v1/txt2img.
+For best results use the grad.io public link. This will already have the proper SSL certificates so that
+if your page is a secure/https page, your image requests won't be blocked
+https://github.com/AUTOMATIC1111/stable-diffusion-webui/discussions/1779
+
 Happy browsing! Go to any webpage, within reason. See below for details on where this 
 extension works best.
 

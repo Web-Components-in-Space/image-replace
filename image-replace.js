@@ -20,8 +20,6 @@ const requestGeneration = (prompt, endpoint, opts = {}) => {
 }
 
 class ImageReplace extends HTMLElement {
-    static get observedAttributes() { return ['src', 'data-src', 'alt', 'image-mode', 'image-service']; }
-
     connectedCallback() {
         this.shadowRoot.innerHTML = `
             <style>
@@ -123,17 +121,6 @@ class ImageReplace extends HTMLElement {
         })
     }
 
-    attributeChangedCallback(name, oldValue, newValue) {
-        switch (name) {
-            case 'src':
-                this.loadOriginalImage();
-                break;
-            case 'image-mode':
-                this.imageMode = newValue;
-                break;
-        }
-    }
-
     set imageMode(val) {
         if (!this.display) {
             return;
@@ -167,11 +154,6 @@ class ImageReplace extends HTMLElement {
                 }
                 break;
         }
-    }
-
-    loadOriginalImage() {
-        const image = new Image();
-        image.src = this.getAttribute('src');
     }
 
     loadImageReplacement(forceMode) {
